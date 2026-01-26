@@ -1,5 +1,5 @@
 """
-Experiment 14: Lipschitz Constants via Small Steps Analysis (Corrected)
+Experiment 14: Lipschitz Constants via Small Steps Analysis
 
 Investigates local smoothness at machine precision scales by measuring
 consecutive output differences ||y_t - y_{t-1}||. This reveals discrete
