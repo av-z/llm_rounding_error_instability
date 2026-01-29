@@ -30,6 +30,7 @@ def main():
 
     model, tokenizer = utils.load_model()
     prompt = "The capital of France is"
+    utils.set_seed(42)
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
     
     with torch.no_grad():
