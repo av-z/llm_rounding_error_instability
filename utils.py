@@ -6,6 +6,8 @@ from datasets import load_dataset
 import warnings
 import os
 from pathlib import Path
+import random
+import numpy as np
 
 try:
     import config
@@ -13,6 +15,19 @@ except ImportError:
     from . import config
 
 warnings.filterwarnings('ignore')
+
+def set_seed(seed: int = 42):
+    """
+    Sets the seed for reproducibility across all libraries.
+    """
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    
+    print(f"Global seed set to {seed}")
 
 def load_model(model_path: str = None, device_map="auto", dtype=None):
     """
@@ -135,9 +150,8 @@ def compute_jacobian_svd(model, embeddings, last_token_idx):
     Compute Jacobian SVD for the last token.
     Uses torch.autograd.functional.jacobian.
     """
-    emb_dtype = getattr(model, "dtype", None)
-    if emb_dtype is None:
-        emb_dtype = next(model.parameters()).dtype
+    # Prefer parameter dtype to avoid model.dtype mismatches (e.g., mixed bf16 weights)
+    emb_dtype = next(model.parameters()).dtype
 
     def forward_fn(flat_emb):
         emb = flat_emb.view(1, -1)
