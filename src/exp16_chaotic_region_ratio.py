@@ -165,7 +165,7 @@ def main():
     print(f"Output: {run_dir}")
     
     try:
-        model, tokenizer = utils.load_model(model_path=args.model_path) # For gpt-oss, device_map="cpu"
+        model, tokenizer = utils.load_model(model_path=args.model_path, device_map="auto") # For gpt-oss, device_map="cpu"
     except Exception as e:
         print(f"Critical Error loading model {args.model_path}: {e}")
         sys.exit(1)
