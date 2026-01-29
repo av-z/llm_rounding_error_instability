@@ -21,14 +21,21 @@ import config
 import utils
 
 def main():
-    print("Loading model in Float32...")
-    model, tokenizer = utils.load_model(dtype=torch.float32)
+    print("Loading model in Float64...")
+    model, tokenizer = utils.load_model(model_path="openai/gpt-oss-20b", dtype=torch.float64, device_map="cpu")
     
+    # Fix for mixed-precision issues (e.g. quantization forcing BF16 kernels)
+    print("Enforcing Float64 precision for numerical stability analysis...")
+    model.double()
+
+    utils.set_seed(42)
+
     prompt = "The capital of France is"
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
     
     with torch.no_grad():
         embeddings = model.model.embed_tokens(inputs["input_ids"])
+    embeddings = embeddings.to(dtype=next(model.parameters()).dtype)
     last_idx = inputs["input_ids"].shape[1] - 1
     
     print("Computing Jacobian SVD...")
@@ -81,7 +88,7 @@ def main():
     print(f"Discrete Jumps Detected: {num_jumps}")
     print(f"Max Jump Magnitude: {np.max(diffs_arr):.2e}")
     
-    save_dir = config.RESULTS_DIR / "exp14_small_steps"
+    save_dir = config.RESULTS_DIR / "exp14_small_steps_FP64_Seed42-GPT-OSS-20B"
     utils.ensure_dir(save_dir)
     
     plt.figure(figsize=(10, 8))
@@ -90,7 +97,7 @@ def main():
     plt.subplot(2, 1, 1)
     plt.plot(steps_arr[1:], diffs_arr[1:], '.-', color='blue', linewidth=0.5, markersize=3)
     plt.title(f"Micro-Continuity Check (Delta={delta:.2e})\nDiscrete Jumps vs Stalls")
-    plt.ylabel("Consecutive Diff ||y_t - y_{t-1}||")
+    plt.ylabel("Consecutive Diff")
     plt.grid(True, alpha=0.3)
     
     # Subplot 2: Cumulative Change (The "Staircase")
